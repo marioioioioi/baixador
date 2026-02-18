@@ -1,41 +1,46 @@
 import streamlit as st
 from datetime import datetime
 
-# 1. CONFIGURAÇÃO DE ELITE
-st.set_page_config(page_title="Portal Paroquial N. Sra. Aparecida", page_icon="⛪", layout="wide")
+# --- CONFIGURAÇÃO DE ELITE ---
+st.set_page_config(page_title="Portal Paroquial", page_icon="⛪", layout="wide")
 
-# 2. CSS DE ALTA PERFORMANCE (FECHADO CORRETAMENTE)
+# --- CSS PROFISSIONAL (BLOCOS CURTOS PARA EVITAR ERRO) ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@300;400;700&display=swap');
-    .main { background-color: #f4f7f9; }
-    .hero-bg {
-        background: linear-gradient(135deg, #002d5b 0%, #004a8d 100%);
-        color: #FFD700; padding: 60px; border-radius: 25px; text-align: center;
-        margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@400;700&display=swap');
+    .main { background-color: #f8f9fa; }
+    .hero {
+        background: linear-gradient(135deg, #002d5b 0%, #0056b3 100%);
+        color: #FFD700; padding: 50px; border-radius: 20px; text-align: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 25px;
     }
-    .hero-bg h1 { font-family: 'Cinzel', serif; font-size: 3.5rem !important; }
-    .liturgia-card {
-        background: white; border-left: 8px solid #FFD700;
-        padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    }
-    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
-    .stTabs [data-baseweb="tab"] {
-        background-color: white; border-radius: 10px; padding: 10px 20px; font-weight: bold;
+    .hero h1 { font-family: 'Cinzel', serif; font-size: 3rem !important; }
+    .card-liturgia {
+        background: white; border-left: 6px solid #FFD700; padding: 20px;
+        border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. CABEÇALHO (BANNER HERO)
+# --- CABEÇALHO ---
 st.markdown("""
-<div class="hero-bg">
+<div class="hero">
     <h1>PARÓQUIA NOSSA SENHORA APARECIDA</h1>
-    <p style="color:white; font-family:'Montserrat'; font-size:1.2rem;">Portal da Fé e Comunidade Paroquial</p>
+    <p style="color:white; font-family:'Montserrat';">Comunidade de Fé, Oração e Evangelização</p>
 </div>
 """, unsafe_allow_html=True)
 
-# 4. CALENDÁRIO LITÚRGICO E TRANSMISSÕES
-col_lit, col_live = st.columns([1, 1.3])
+# --- COLUNAS PRINCIPAIS ---
+col_missa, col_lit = st.columns([1.5, 1])
+
+with col_missa:
+    st.subheader("🔴 Transmissão e Missas")
+    yt_url = "https://www.youtube.com/@paroquianossasenhoraaparec730/streams"
+    st.link_button("▶️ ASSISTIR AO VIVO NO YOUTUBE", yt_url, use_container_width=True)
+    
+    st.info("**Horários das Missas:**\n\n- Dom: 08h, 10h e 19h\n- Ter a Sex: 19h")
 
 with col_lit:
-    st.markdown
+    st.subheader("📖 Liturgia Diária")
+    hoje = datetime.now().strftime('%d/%m/%Y')
+    st.markdown(f"""
