@@ -1,96 +1,71 @@
 import streamlit as st
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
+# --- CONFIGURAÇÃO DE ELITE ---
 st.set_page_config(
-    page_title="Paróquia Nossa Senhora Aparecida | Links Oficiais",
+    page_title="Paróquia Nossa Senhora Aparecida | Portal Oficial",
     page_icon="⛪",
-    layout="centered"
+    layout="wide"
 )
 
-# --- ESTILO CSS PARA BOTÕES PROFISSIONAIS ---
+# --- CSS AVANÇADO (DESIGN DE AGÊNCIA) ---
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 
-    .main { background-color: #f4f7f9; }
+    /* Fundo e Container */
+    .main { background-color: #ffffff; }
     
-    .header-container {
+    /* Hero Section (Banner) */
+    .hero {
+        background: linear-gradient(rgba(0, 45, 91, 0.8), rgba(0, 45, 91, 0.8)), 
+                    url('https://images.unsplash.com/photo-1548625149-fc4a29cf7092?q=80&w=2000');
+        background-size: cover;
+        background-position: center;
+        padding: 100px 20px;
         text-align: center;
-        padding: 20px;
-        margin-bottom: 30px;
+        border-radius: 0 0 50px 50px;
+        color: white;
+        margin-bottom: 40px;
     }
 
-    .igreja-nome {
+    .hero h1 {
         font-family: 'Playfair Display', serif;
-        color: #002d5b;
-        font-size: 2.5rem;
-        margin-bottom: 5px;
+        font-size: 4rem !important;
+        margin-bottom: 10px;
+        color: #FFD700 !important; /* Dourado */
     }
 
-    /* Estilo dos Botões de Link */
-    .link-button {
-        display: block;
-        width: 100%;
-        background-color: white;
-        color: #002d5b !important;
-        padding: 18px;
-        margin-bottom: 15px;
+    /* Cards de Transmissão */
+    .live-card {
+        background: white;
+        border-radius: 20px;
+        padding: 25px;
         text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border-top: 5px solid #002d5b;
+        transition: 0.3s;
+    }
+    .live-card:hover { transform: translateY(-10px); }
+
+    /* Botões Profissionais */
+    .btn-custom {
+        display: inline-block;
+        padding: 12px 25px;
+        margin: 10px;
+        border-radius: 30px;
         text-decoration: none;
-        font-family: 'Roboto', sans-serif;
-        font-weight: bold;
-        border-radius: 12px;
-        border: 1px solid #d1d9e6;
-        box-shadow: 3px 3px 6px #b8b9be, -3px -3px 6px #ffffff;
-        transition: all 0.3s ease;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: 0.3s;
     }
+    .btn-yt { background-color: #FF0000; color: white !important; }
+    .btn-fb { background-color: #1877F2; color: white !important; }
+    .btn-pix { background-color: #32BCAD; color: white !important; }
 
-    .link-button:hover {
-        transform: translateY(-3px);
-        box-shadow: 6px 6px 12px #b8b9be, -6px -6px 12px #ffffff;
-        background-color: #002d5b;
-        color: white !important;
-    }
-
-    .link-especial {
-        background: linear-gradient(135deg, #002d5b 0%, #0056b3 100%);
-        color: white !important;
-        border: none;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- CABEÇALHO ---
-st.markdown("""
-    <div class="header-container">
-        <img src="https://cdn-icons-png.flaticon.com/512/2881/2881023.png" width="80">
-        <h1 class="igreja-nome">Nossa Senhora Aparecida</h1>
-        <p style="color: #666;">Paróquia Matriz - Bem-vindo à nossa comunidade</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-# --- LISTA DE LINKS (SITE POR LINKS) ---
-
-# 1. Transmissão Ao Vivo (Link Especial)
-st.markdown('<a href="https://youtube.com" class="link-button link-especial">🎥 ASSISTIR MISSA AO VIVO (YOUTUBE)</a>', unsafe_allow_html=True)
-
-# 2. Facebook
-st.markdown('<a href="https://facebook.com" class="link-button">🔵 NOSSO FACEBOOK (FOTOS E AVISOS)</a>', unsafe_allow_html=True)
-
-# 3. WhatsApp da Secretaria
-st.markdown('<a href="https://wa.me/5511999999999" class="link-button">📱 WHATSAPP DA SECRETARIA</a>', unsafe_allow_html=True)
-
-# 4. Horários de Missa (Link para um PDF ou Imagem da Agenda)
-st.markdown('<a href="#" class="link-button">🕒 CONFIRA NOSSOS HORÁRIOS</a>', unsafe_allow_html=True)
-
-# 5. Intenções de Missa (Link para formulário Google ou WhatsApp)
-st.markdown('<a href="#" class="link-button">📝 ENVIAR INTENÇÕES PARA O ALTAR</a>', unsafe_allow_html=True)
-
-# 6. Dízimo e Ofertas (PIX)
-st.markdown('<a href="#" class="link-button">💝 CONTRIBUIR COM O DÍZIMO (PIX)</a>', unsafe_allow_html=True)
-
-# 7. Localização (Google Maps)
-st.markdown('<a href="https://maps.google.com" class="link-button">📍 COMO CHEGAR NA MATRIZ</a>', unsafe_allow_html=True)
-
-# --- RODAPÉ ---
-st.markdown("<br><p style='text-align: center; color: #aaa; font-size: 0.8rem;'>© 2026 Paróquia Nossa Senhora Aparecida</p>", unsafe_allow_html=True)
+    /* Grid de Horários */
+    .horario-box {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 15px
