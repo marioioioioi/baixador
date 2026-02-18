@@ -59,18 +59,3 @@ if st.button("🔍 PESQUISAR MÚSICA", use_container_width=True):
                     titulo = limpar_nome(res.get('title', 'Musica'))
                     link_yt = res.get('webpage_url')
                     link_audio_direto = res.get('url')
-                    
-                    # Armazena temporariamente para o botão de confirmação
-                    st.session_state.temp_song = {
-                        'titulo': titulo, 
-                        'link': link_yt,
-                        'previa': link_audio_direto
-                    }
-                    
-                    st.write(f"### 🎵 Resultado: {titulo}")
-                    st.audio(link_audio_direto, format="audio/mp3")
-            except Exception as e:
-                st.error(f"Erro ao buscar música: {e}")
-
-# Botão para adicionar (aparece só se houver resultado)
-if 'temp_song' in
