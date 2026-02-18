@@ -71,16 +71,18 @@ if st.button("🔍 PESQUISAR MÚSICA", use_container_width=True):
             except Exception as e:
                 st.error(f"Erro ao buscar música: {e}")
 
-# Adicionar à fila (Bloco fora do try de busca)
+# Adicionar à fila
 if 'temp_song' in st.session_state:
-    if st.button(f"✅ ADICIONAR: {st.session_state['temp_song']['titulo']}", use_container_width=True, type="primary"):
+    nome_btn = st.session_state['temp_song']['titulo']
+    if st.button(f"✅ ADICIONAR: {nome_btn}", use_container_width=True, type="primary"):
         st.session_state.fila_nuvem.append(st.session_state.temp_song)
         salvar_fila()
         del st.session_state.temp_song
-        st.success("Adicionado com sucesso!")
+        st.success("Adicionado!")
         st.rerun()
 
 # --- EXIBIÇÃO DA FILA ---
 if st.session_state.fila_nuvem:
     st.divider()
-    st.subheader(f"📋 Músicas na Fila ({len(st.session_
+    qtd = len(st.session_state.fila_nuvem)
+    st.subheader(f"📋 Músicas na F
