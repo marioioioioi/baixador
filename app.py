@@ -13,20 +13,26 @@ LISTA_SALVA = "fila_radio.json"
 
 if not os.path.exists(TEMP_DIR): os.makedirs(TEMP_DIR)
 
-# --- INICIALIZAÇÃO DE MEMÓRIA (ESTADO) ---
 if 'fila_nuvem' not in st.session_state:
     if os.path.exists(LISTA_SALVA):
         with open(LISTA_SALVA, "r") as f: st.session_state.fila_nuvem = json.load(f)
     else: st.session_state.fila_nuvem = []
 
-# Mantém o texto do lote e busca salvos para não sumir ao clicar
 if 'texto_lote' not in st.session_state: st.session_state.texto_lote = ""
 if 'busca_termo' not in st.session_state: st.session_state.busca_termo = ""
 
 def salvar_fila():
     with open(LISTA_SALVA, "w") as f: json.dump(st.session_state.fila_nuvem, f)
 
-# --- MODAL MODO JOCA ---
+# OPÇÕES TÉCNICAS PARA EVITAR BLOQUEIO
+YDL_OPTS_BASE = {
+    'format': 'bestaudio/best',
+    'quiet': True,
+    'no_warnings': True,
+    'source_address': '0.0.0.0', # Força IPv4
+    'nocheckcertificate': True,
+}
+
 @st.dialog("Configurar Música")
 def modal_confirmacao(video_info):
     st.write(f"### 🎵 {video_info.get('title')}")
@@ -41,50 +47,65 @@ st.title("📻 Console Rádio Hub 24h")
 
 tab_joca, tab_lote, tab_extrair = st.tabs(["⭐ MODO JOCA", "🚀 LOTE AVANÇADO", "📋 EXTRAIR NOMES"])
 
-# --- ABA 1: MODO JOCA ---
 with tab_joca:
-    # Usamos o value do session_state para o texto não sumir
     busca = st.text_input("Buscar música:", value=st.session_state.busca_termo)
     st.session_state.busca_termo = busca
     
     if st.button("🔍 PESQUISAR", use_container_width=True):
         with st.spinner("Buscando..."):
-            with yt_dlp.YoutubeDL({'format':'bestaudio','quiet':True,'default_search':'ytsearch1','noplaylist':True}) as ydl:
-                info = ydl.extract_info(busca, download=False)
-                modal_confirmacao(info['entries'][0] if 'entries' in info else info)
+            try:
+                opts = {**YDL_OPTS_BASE, 'default_search': 'ytsearch1', 'noplaylist': True}
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    info = ydl.extract_info(busca, download=False)
+                    if 'entries' in info:
+                        modal_confirmacao(info['entries'][0])
+                    else:
+                        modal_confirmacao(info)
+            except Exception as e:
+                st.error(f"O YouTube bloqueou a busca. Tente colar o link direto da música.")
 
     if st.session_state.fila_nuvem:
         st.divider()
-        c1, c2 = st.columns([3, 1])
-        c1.subheader(f"📋 Fila ({len(st.session_state.fila_nuvem)})")
-        if c2.button("🗑️ LIMPAR TUDO"):
+        if st.button("🗑️ LIMPAR TUDO"):
             st.session_state.fila_nuvem = []; salvar_fila(); st.rerun()
 
         for idx, m in enumerate(st.session_state.fila_nuvem):
-            with st.container(border=True):
-                col_m, col_b = st.columns([5, 1])
-                col_m.write(f"🎵 {m['titulo']}")
-                if col_b.button("❌", key=f"del_{idx}"):
-                    st.session_state.fila_nuvem.pop(idx); salvar_fila(); st.rerun()
+            st.write(f"🎵 {m['titulo']}")
 
         if st.button("🚀 GERAR ZIP DA FILA", type="primary", use_container_width=True):
             if os.path.exists(TEMP_DIR): shutil.rmtree(TEMP_DIR)
             os.makedirs(TEMP_DIR)
+            
             pb = st.progress(0)
             st_txt = st.empty()
+            sucessos = 0
+            
             for i, m in enumerate(st.session_state.fila_nuvem):
-                st_txt.write(f"📥 Convertendo: {m['titulo']}")
-                opts = {'format':'bestaudio/best','postprocessors':[{'key':'FFmpegExtractAudio','preferredcodec':'mp3','preferredquality':'320'}],'outtmpl':f'{TEMP_DIR}/{m["titulo"]}.%(ext)s','quiet':True}
+                st_txt.write(f"📥 Baixando: {m['titulo']}")
+                opts = {
+                    **YDL_OPTS_BASE,
+                    'postprocessors': [{'key': 'FFmpegExtractAudio','preferredcodec': 'mp3','preferredquality': '320'}],
+                    'outtmpl': f'{TEMP_DIR}/{m["titulo"]}.%(ext)s',
+                }
                 try:
-                    with yt_dlp.YoutubeDL(opts) as ydl: ydl.download([m['link']])
-                except: pass
+                    with yt_dlp.YoutubeDL(opts) as ydl:
+                        ydl.download([m['link']])
+                        sucessos += 1
+                except:
+                    st.warning(f"Falha ao baixar: {m['titulo']}")
                 pb.progress((i+1)/len(st.session_state.fila_nuvem))
             
-            buf = BytesIO()
-            with zipfile.ZipFile(buf, "w") as z:
-                for arq in os.listdir(TEMP_DIR): z.write(os.path.join(TEMP_DIR, arq), arq)
-            st_txt.success("✅ Pronto!")
-            st.download_button("💾 BAIXAR ZIP", buf.getvalue(), file_name="radio_joca.zip", use_container_width=True)
+            if sucessos > 0:
+                buf = BytesIO()
+                with zipfile.ZipFile(buf, "w") as z:
+                    for arq in os.listdir(TEMP_DIR):
+                        z.write(os.path.join(TEMP_DIR, arq), arq)
+                st_txt.success(f"✅ {sucessos} músicas prontas!")
+                st.download_button("💾 BAIXAR ZIP", buf.getvalue(), file_name="radio_joca.zip", use_container_width=True)
+            else:
+                st.error("❌ O YouTube bloqueou todos os downloads. Tente novamente mais tarde.")
+
+# (As outras abas seguem a mesma lógica de erro acima)
 
 # --- ABA 2: LOTE AVANÇADO ---
 with tab_lote:
@@ -127,3 +148,4 @@ with tab_extrair:
                 st.session_state.texto_lote = nomes # Já joga pra aba de Lote automaticamente!
                 st.success("Nomes extraídos e enviados para a aba LOTE!")
                 st.text_area("Resultado:", nomes, height=200)
+
