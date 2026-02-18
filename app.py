@@ -1,45 +1,49 @@
 import streamlit as st
 
-# 1. Configuração Inicial
-st.set_page_config(page_title="Paróquia Oficial", page_icon="⛪", layout="wide")
+# 1. Configuração de Página
+st.set_page_config(page_title="Paróquia N. Sra. Aparecida", page_icon="⛪")
 
-# 2. Estilo Visual (CSS) - Fechado corretamente
-st.markdown("""
-<style>
-    .main { background-color: #ffffff; }
-    .hero {
-        background: linear-gradient(rgba(0,45,91,0.7), rgba(0,45,91,0.7)), url('https://images.unsplash.com/photo-1548625149-fc4a29cf7092?q=80&w=1000');
-        background-size: cover; padding: 60px; text-align: center; color: white; border-radius: 0 0 30px 30px;
-    }
-    .card {
-        background: #f8f9fa; border-radius: 15px; padding: 20px; text-align: center;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 5px solid #002d5b; margin-bottom: 20px;
-    }
-    .btn {
-        display: inline-block; padding: 10px 20px; border-radius: 20px; 
-        text-decoration: none; font-weight: bold; color: white !important;
-    }
-</style>
-""", unsafe_allow_html=True)
+# 2. Cabeçalho Estilizado
+st.title("⛪ Paróquia Nossa Senhora Aparecida")
+st.subheader("Bem-vindo à nossa comunidade de fé!")
 
-# 3. Banner Principal
-st.markdown('<div class="hero"><h1>Paróquia Nossa Senhora Aparecida</h1><p>Mãe Aparecida, rogai por nós!</p></div>', unsafe_allow_html=True)
+# 3. Banner de Transmissão (YouTube e Facebook)
+st.error("🔴 **TRANSMISSÕES AO VIVO**")
+col_yt, col_fb = st.columns(2)
+with col_yt:
+    st.link_button("▶️ ASSISTIR NO YOUTUBE", "https://youtube.com", use_container_width=True)
+with col_fb:
+    st.link_button("🔵 ASSISTIR NO FACEBOOK", "https://facebook.com", use_container_width=True)
 
+st.divider()
+
+# 4. Informações Principais
+col_info, col_zap = st.columns(2)
+
+with col_info:
+    st.markdown("### 🕒 Horários de Missa")
+    st.write("- **Domingos:** 08h, 10h e 19h")
+    st.write("- **Terça a Sexta:** 19h")
+    st.write("- **Confissões:** Quinta às 15h")
+
+with col_zap:
+    st.markdown("### 📱 Contato")
+    st.write("Fale com a nossa secretaria:")
+    st.link_button("💬 CHAMAR NO WHATSAPP", "https://wa.me/5511999999999", use_container_width=True)
+
+st.divider()
+
+# 5. Dízimo e Ofertas
+st.markdown("### 💝 Dízimo e Solidariedade")
+st.info("Sua generosidade mantém nossa paróquia viva!")
+st.code("Chave PIX (CNPJ): 12.345.678/0001-99", language="text")
+st.caption("Mitra Diocesana - Paróquia Nossa Senhora Aparecida")
+
+# 6. Localização
+st.divider()
+st.markdown("### 📍 Localização")
+st.link_button("🗺️ VER NO GOOGLE MAPS", "https://goo.gl/maps/exemplo", use_container_width=True)
+
+# 7. Rodapé
 st.write("---")
-
-# 4. Links de Transmissão e Redes (Sem colunas complexas para evitar erro de indentação)
-st.markdown("### 🎥 Transmissões e Contato")
-
-# Cartão YouTube
-st.markdown("""
-<div class="card">
-    <h3 style="color:#FF0000">YouTube Oficial</h3>
-    <p>Assista às Missas ao Vivo todos os Domingos</p>
-    <a href="https://youtube.com" class="btn" style="background:#FF0000">ABRIR YOUTUBE</a>
-</div>
-""", unsafe_allow_html=True)
-
-# Cartão Facebook
-st.markdown("""
-<div class="card">
-    <h3 style="color:#187
+st.caption("© 2026 Paróquia Nossa Senhora Aparecida - Todos os direitos reservados.")
