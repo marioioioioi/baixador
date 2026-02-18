@@ -1,76 +1,81 @@
-import streamlit as st
-import datetime
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paróquia Nossa Senhora Aparecida | Portal Oficial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; }
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .hero-gradient {
+            background: linear-gradient(rgba(0, 45, 91, 0.9), rgba(0, 45, 91, 0.9)), 
+                        url('https://images.unsplash.com/photo-1548625149-fc4a29cf7092?auto=format&fit=crop&q=80&w=1500');
+            background-size: cover; background-position: center;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, #B8860B 0%, #FFD700 100%);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .btn-gold:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(184, 134, 11, 0.3);
+        }
+    </style>
+</head>
+<body>
 
-# --- CONFIGURAÇÃO DE ALTA PATENTE ---
-st.set_page_config(page_title="Portal Paroquial", page_icon="⛪", layout="wide")
+    <header class="hero-gradient min-h-[60vh] flex flex-col items-center justify-center text-center px-4 rounded-b-[50px] shadow-2xl">
+        <div class="mb-6">
+            <span class="text-yellow-400 text-6xl">⛪</span>
+        </div>
+        <h1 class="font-cinzel text-4xl md:text-6xl text-white mb-4 tracking-widest">Paróquia Nossa Senhora Aparecida</h1>
+        <p class="text-blue-100 text-lg md:text-xl font-light max-w-2xl italic">"Sob o Teu manto sagrado, caminhamos com fé e esperança."</p>
+    </header>
 
-# --- DESIGN SYSTEM (CSS MINIMALISTA E ELITISTA) ---
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@300;400&display=swap');
-    
-    html, body, [data-testid="stAppViewContainer"] { background-color: #ffffff; }
-    
-    .header-box {
-        background-color: #002d5b; padding: 50px; border-radius: 20px;
-        text-align: center; color: #FFD700; margin-bottom: 30px;
-    }
-    .header-box h1 { font-family: 'Cinzel', serif; font-size: 3rem !important; margin: 0; }
-    
-    .section-title {
-        font-family: 'Cinzel', serif; color: #002d5b;
-        border-bottom: 2px solid #FFD700; padding-bottom: 10px; margin-top: 40px;
-    }
-    
-    .stTabs [data-baseweb="tab-list"] { gap: 20px; border-bottom: 1px solid #eee; }
-    .stTabs [data-baseweb="tab"] {
-        height: 50px; background-color: #f8f9fa; border-radius: 10px 10px 0 0;
-        font-family: 'Montserrat', sans-serif; font-weight: bold;
-    }
-</style>
-""", unsafe_allow_html=True)
+    <main class="max-w-6xl mx-auto px-4 -mt-16 mb-20">
+        
+        <div class="glass rounded-3xl p-8 shadow-xl border-t-4 border-yellow-500 mb-12">
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div>
+                    <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold tracking-widest uppercase">Ao Vivo</span>
+                    <h2 class="font-cinzel text-2xl text-blue-900 mt-4 mb-2">Celebrações em Tempo Real</h2>
+                    <p class="text-gray-600 mb-6">Não pôde comparecer? Una-se a nós em oração através do nosso canal oficial de transmissões.</p>
+                    <a href="https://www.youtube.com/@paroquianossasenhoraaparec730/streams" target="_blank" class="btn-gold text-blue-900 font-bold py-4 px-8 rounded-xl inline-block w-full md:w-auto text-center">
+                        ▶ ACESSAR YOUTUBE LIVES
+                    </a>
+                </div>
+                <div class="bg-blue-50 p-6 rounded-2xl">
+                    <h3 class="font-bold text-blue-900 mb-4 flex items-center">
+                        <span class="mr-2">📖</span> Liturgia de Hoje
+                    </h3>
+                    <div class="space-y-3 text-sm">
+                        <p class="flex justify-between"><span class="text-gray-500">Cor Litúrgica:</span> <span class="font-bold text-green-600">Verde</span></p>
+                        <p class="flex justify-between"><span class="text-gray-500">Tempo:</span> <span class="font-bold">Comum</span></p>
+                        <hr>
+                        <p class="italic text-gray-700 font-serif">"A vossa palavra, Senhor, é espírito e vida!"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-# --- CABEÇALHO ---
-st.markdown("""
-<div class="header-box">
-    <h1>PARÓQUIA NOSSA SENHORA APARECIDA</h1>
-    <p style="color:white; font-family:'Montserrat'; letter-spacing: 2px;">COMUNIDADE • FÉ • TRADIÇÃO</p>
-</div>
-""", unsafe_allow_html=True)
+        <div class="grid md:grid-cols-3 gap-6">
+            
+            <div class="bg-white p-8 rounded-3xl shadow-lg hover:shadow-2xl transition-all">
+                <div class="text-3xl mb-4">🕒</div>
+                <h3 class="font-cinzel text-xl text-blue-900 mb-4">Horários</h3>
+                <ul class="text-gray-600 space-y-2 text-sm">
+                    <li><strong>Domingos:</strong> 08h, 10h e 19h</li>
+                    <li><strong>Semana:</strong> Terça a Sexta 19h</li>
+                    <li class="pt-4 text-blue-800"><strong>Confissões:</strong> Quinta às 15h</li>
+                </ul>
+            </div>
 
-# --- DESTAQUE: CELEBRAÇÃO VIVA ---
-col1, col2 = st.columns([1.5, 1])
-
-with col1:
-    st.markdown("<h2 class='section-title'>📺 Transmissão ao Vivo</h2>", unsafe_allow_html=True)
-    st.write("##")
-    yt_url = "https://www.youtube.com/@paroquianossasenhoraaparec730/streams"
-    st.link_button("✨ ACESSAR CANAL DE LIVES", yt_url, use_container_width=True)
-    st.caption("Acompanhe a Santa Missa em alta definição todos os domingos.")
-
-with col2:
-    st.markdown("<h2 class='section-title'>📖 Liturgia Diária</h2>", unsafe_allow_html=True)
-    st.write("##")
-    hoje = datetime.date.today().strftime('%d de Outubro, %Y') # Exemplo estético
-    st.markdown(f"**DATA:** {hoje}")
-    st.success("🟢 **TEMPO:** Comum (Semanas da Esperança)")
-    st.info("📖 **EVANGELHO:** Meditação Diária no Coração da Igreja")
-
-# --- PORTAL INSTITUCIONAL (OS TÓPICOS) ---
-st.markdown("<h2 class='section-title'>🏛️ Portal da Comunidade</h2>", unsafe_allow_html=True)
-
-abas = ["SACRAMENTOS", "PASTORAIS", "AGENDA", "DÍZIMO", "SECRETARIA"]
-tab1, tab2, tab3, tab4, tab5 = st.tabs(abas)
-
-with tab1:
-    st.write("### Vida Sacramental")
-    st.markdown("* **Batismo:** Vida Nova em Cristo.\n* **Eucaristia:** O Pão da Vida.\n* **Matrimônio:** Aliança de Amor.")
-
-with tab2:
-    st.write("### Pastorais Ativas")
-    col_p1, col_p2 = st.columns(2)
-    col_p1.write("- Pastoral da Catequese\n- Vicentinos\n- Coroinhas")
-    col_p2.write("- Terço dos Homens\n- Ministério de Música\n- RCC")
-
-with tab3:
-    st.write("### Agenda Paroquial")
+            <div class="bg-white p-8 rounded-3xl shadow-lg border-b-4 border-yellow-500">
+                <div class="text-3xl
