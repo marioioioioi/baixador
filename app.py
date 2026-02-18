@@ -26,7 +26,7 @@ if 'fila_nuvem' not in st.session_state:
         try:
             with open(LISTA_SALVA, "r", encoding="utf-8") as f:
                 st.session_state.fila_nuvem = json.load(f)
-        except: 
+        except Exception: 
             st.session_state.fila_nuvem = []
     else: 
         st.session_state.fila_nuvem = []
@@ -60,4 +60,27 @@ if st.button("🔍 PESQUISAR MÚSICA", use_container_width=True):
                     link_yt = res.get('webpage_url')
                     link_audio_direto = res.get('url')
                     
-                    st.session_state.temp_song
+                    st.session_state.temp_song = {
+                        'titulo': titulo_limpo, 
+                        'link': link_yt,
+                        'previa': link_audio_direto
+                    }
+                    
+                    st.write(f"### 🎵 Resultado: {titulo_limpo}")
+                    st.audio(link_audio_direto, format="audio/mp3")
+            except Exception as e:
+                st.error(f"Erro ao buscar música: {e}")
+
+# Adicionar à fila (Bloco fora do try de busca)
+if 'temp_song' in st.session_state:
+    if st.button(f"✅ ADICIONAR: {st.session_state['temp_song']['titulo']}", use_container_width=True, type="primary"):
+        st.session_state.fila_nuvem.append(st.session_state.temp_song)
+        salvar_fila()
+        del st.session_state.temp_song
+        st.success("Adicionado com sucesso!")
+        st.rerun()
+
+# --- EXIBIÇÃO DA FILA ---
+if st.session_state.fila_nuvem:
+    st.divider()
+    st.subheader(f"📋 Músicas na Fila ({len(st.session_
