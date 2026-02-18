@@ -1,88 +1,106 @@
 import streamlit as st
-import yt_dlp
-import os
-import shutil
-import zipfile
-import json
-import re
-from io import BytesIO
+from datetime import datetime
 
-# --- CONFIGURAÇÃO DE DIRETÓRIOS ---
-BASE_DIR = "radio online"
-TEMP_DIR = os.path.join(BASE_DIR, "downloads_temp")
-LISTA_SALVA = os.path.join(BASE_DIR, "fila_radio.json")
+# --- CONFIGURAÇÃO DA PÁGINA ---
+st.set_page_config(
+    page_title="Paróquia Nossa Senhora Aparecida",
+    page_icon="⛪",
+    layout="centered"
+)
 
-for d in [BASE_DIR, TEMP_DIR]:
-    if not os.path.exists(d): 
-        os.makedirs(d)
+# --- ESTILO CUSTOMIZADO (Azul e Dourado) ---
+st.markdown("""
+    <style>
+    .main { background-color: #f0f2f6; }
+    .stButton>button { width: 100%; border-radius: 20px; background-color: #003366; color: white; }
+    h1 { color: #003366; text-align: center; border-bottom: 2px solid #ffd700; }
+    .css-10trblm { color: #003366; }
+    </style>
+    """, unsafe_allow_html=True)
 
-def limpar_nome(nome):
-    nome = re.sub(r'[\\/*?:"<>|#]', "", nome)
-    return nome.strip()
+# --- CABEÇALHO ---
+st.title("⛪ Paróquia Nossa Senhora Aparecida")
+st.markdown("<p style='text-align: center;'><i>'Aonde quer que eu vá, serei guiado pelo Teu manto.'</i></p>", unsafe_allow_html=True)
 
-# --- ESTADO DA SESSÃO ---
-if 'fila_nuvem' not in st.session_state:
-    if os.path.exists(LISTA_SALVA):
-        try:
-            with open(LISTA_SALVA, "r", encoding="utf-8") as f:
-                st.session_state.fila_nuvem = json.load(f)
-        except Exception: 
-            st.session_state.fila_nuvem = []
-    else: 
-        st.session_state.fila_nuvem = []
+# --- MENU LATERAL ---
+st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Nossa_Senhora_Aparecida_-_escultura.jpg/250px-Nossa_Senhora_Aparecida_-_escultura.jpg", width=150)
+st.sidebar.title("Secretaria Virtual")
+opcao = st.sidebar.radio("Navegue pelo site:", 
+    ["Início", "Horários de Missa", "Pedidos de Oração", "Dízimo e Ofertas", "Notícias"])
 
-def salvar_fila():
-    with open(LISTA_SALVA, "w", encoding="utf-8") as f:
-        json.dump(st.session_state.fila_nuvem, f)
+st.sidebar.divider()
+st.sidebar.info("📍 Rua da Matriz, 123 - Centro\n\n📞 (11) 99999-9999")
 
-st.set_page_config(page_title="Rádio Hub Premium", page_icon="📻")
-st.title("📻 Console Rádio Hub + Prévia")
+# --- LÓGICA DAS PÁGINAS ---
 
-# --- ABA DE BUSCA ---
-busca = st.text_input("Busque pelo nome ou cole o link do YouTube:", placeholder="Ex: Matheus & Kauan Fase de Cura")
+if opcao == "Início":
+    st.image("https://images.unsplash.com/photo-1548625149-fc4a29cf7092?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80", caption="Nossa Casa de Oração")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Boas-vindas")
+        st.write("""
+        Seja bem-vindo ao nosso portal digital! Nossa paróquia é um lugar de acolhida, 
+        fé e devoção à nossa Padroeira. Aqui você encontra todas as informações 
+        para participar da nossa comunidade.
+        """)
+    with col2:
+        st.subheader("Palavra do Pároco")
+        st.info("“A fé não é apenas um sentimento, é uma decisão de caminhar com Cristo.” — Pe. João Silva")
 
-if st.button("🔍 PESQUISAR MÚSICA", use_container_width=True):
-    if busca:
-        with st.spinner("Buscando áudio..."):
-            ydl_opts_busca = {
-                'format': 'bestaudio/best',
-                'quiet': True,
-                'default_search': 'ytsearch1',
-                'nocheckcertificate': True,
-                'no_warnings': True,
-            }
-            try:
-                with yt_dlp.YoutubeDL(ydl_opts_busca) as ydl:
-                    info = ydl.extract_info(busca, download=False)
-                    res = info['entries'][0] if 'entries' in info else info
-                    
-                    titulo_limpo = limpar_nome(res.get('title', 'Musica'))
-                    link_yt = res.get('webpage_url')
-                    link_audio_direto = res.get('url')
-                    
-                    st.session_state.temp_song = {
-                        'titulo': titulo_limpo, 
-                        'link': link_yt,
-                        'previa': link_audio_direto
-                    }
-                    
-                    st.write(f"### 🎵 Resultado: {titulo_limpo}")
-                    st.audio(link_audio_direto, format="audio/mp3")
-            except Exception as e:
-                st.error(f"Erro ao buscar música: {e}")
+elif opcao == "Horários de Missa":
+    st.header("🕒 Horários de Celebrações")
+    
+    with st.expander("⛪ Missas na Matriz", expanded=True):
+        st.write("**Terça a Sexta:** 19h")
+        st.write("**Sábado:** 18h")
+        st.write("**Domingo:** 08h, 10h e 19h")
 
-# Adicionar à fila
-if 'temp_song' in st.session_state:
-    nome_btn = st.session_state['temp_song']['titulo']
-    if st.button(f"✅ ADICIONAR: {nome_btn}", use_container_width=True, type="primary"):
-        st.session_state.fila_nuvem.append(st.session_state.temp_song)
-        salvar_fila()
-        del st.session_state.temp_song
-        st.success("Adicionado!")
-        st.rerun()
+    with st.expander("🙏 Confissões"):
+        st.write("**Quinta-feira:** 14h às 17h")
+        st.write("**Sexta-feira:** 09h às 11h")
+    
+    with st.expander("📖 Batizados"):
+        st.write("Todo 2º domingo do mês, após a missa das 10h. Procure a secretaria com 15 dias de antecedência.")
 
-# --- EXIBIÇÃO DA FILA ---
-if st.session_state.fila_nuvem:
-    st.divider()
-    qtd = len(st.session_state.fila_nuvem)
-    st.subheader(f"📋 Músicas na F
+elif opcao == "Pedidos de Oração":
+    st.header("🙏 Pedidos de Oração")
+    st.write("Deixe aqui suas intenções para que possamos rezar por você nas missas da semana.")
+    
+    with st.form("form_oracao"):
+        nome = st.text_input("Seu Nome")
+        tipo = st.selectbox("Tipo de Intenção", ["Agradecimento", "Saúde", "Falecimento", "Causas Impossíveis"])
+        mensagem = st.text_area("Sua intenção")
+        submit = st.form_submit_button("Enviar para o Altar")
+        
+        if submit:
+            st.success(f"Obrigado, {nome}. Seu pedido foi enviado e será colocado aos pés de Nossa Senhora.")
+
+elif opcao == "Dízimo e Ofertas":
+    st.header("💝 Dízimo e Solidariedade")
+    st.write("""
+    O dízimo é um ato de gratidão e devolução. Graças à sua generosidade, 
+    mantemos nossas obras de caridade e a conservação da nossa igreja.
+    """)
+    
+    st.warning("🔑 **Chave PIX (CNPJ):** 00.000.000/0001-00")
+    st.write("**Banco:** Mitra Diocesana")
+    
+    if st.button("Quero ser dizimista (Cadastrar)"):
+        st.text_input("Seu Telefone")
+        st.button("Enviar contato")
+
+elif opcao == "Notícias":
+    st.header("📰 Mural da Comunidade")
+    
+    st.markdown("---")
+    st.subheader("🍓 Festa da Padroeira 2026")
+    st.write("Já começaram os preparativos para a nossa quermesse! Venha ser voluntário nas barracas.")
+    
+    st.markdown("---")
+    st.subheader("🎨 Catequese 2026")
+    st.write("Inscrições abertas para a Primeira Eucaristia. Traga o registro de batismo da criança.")
+
+# --- RODAPÉ ---
+st.divider()
+st.markdown("<p style='text-align: center; font-size: 0.8em;'>© 2026 Paróquia Nossa Senhora Aparecida - Desenvolvido com Fé</p>", unsafe_allow_html=True)
