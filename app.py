@@ -9,15 +9,15 @@ st.markdown("#### *'Aonde quer que eu vá, serei guiado pelo Teu manto.'*")
 
 st.divider()
 
-# 3. SEÇÃO DE TRANSMISSÕES (YouTube Atualizado)
+# 3. SEÇÃO DE TRANSMISSÕES (Link Direto para Lives)
 st.error("🔴 **ACOMPANHE AS TRANSMISSÕES AO VIVO**")
 
-# Link que você enviou colocado no botão do YouTube
-link_youtube = "https://youtube.com/@paroquianossasenhoraaparec730?si=Y1wZ6v8K25U7XFfZ"
+# Link atualizado para a aba de "Ao Vivo"
+link_streams = "https://www.youtube.com/@paroquianossasenhoraaparec730/streams"
 
 col_yt, col_fb = st.columns(2)
 with col_yt:
-    st.link_button("▶️ ASSISTIR NO YOUTUBE", link_youtube, use_container_width=True)
+    st.link_button("▶️ ASSISTIR NO YOUTUBE (AO VIVO)", link_streams, use_container_width=True)
 with col_fb:
     st.link_button("🔵 ASSISTIR NO FACEBOOK", "https://facebook.com", use_container_width=True)
 
@@ -35,7 +35,7 @@ with col_missa:
 with col_zap:
     st.markdown("### 📱 Secretaria Virtual")
     st.write("Dúvidas sobre Batismo, Casamento ou Intenções:")
-    # Lembre-se de trocar o número abaixo pelo real da paróquia
+    # Substitua o número abaixo quando tiver o oficial
     st.link_button("💬 CHAMAR NO WHATSAPP", "https://wa.me/5511999999999", use_container_width=True)
 
 st.divider()
@@ -43,5 +43,4 @@ st.divider()
 # 5. Dízimo e Ofertas
 st.markdown("### 💝 Dízimo e Solidariedade")
 st.warning("Sua contribuição sustenta nossas obras evangelizadoras e sociais.")
-st.code("Chave PIX (CNPJ): 12.345.678/0001-99", language="text")
-st.caption("Mitra Diocesana - Paróquia Nossa Senhora Aparecida")
+st.code("Chave PIX (CNPJ): 12.345.678
