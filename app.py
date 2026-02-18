@@ -13,7 +13,8 @@ TEMP_DIR = os.path.join(BASE_DIR, "downloads_temp")
 LISTA_SALVA = os.path.join(BASE_DIR, "fila_radio.json")
 
 for d in [BASE_DIR, TEMP_DIR]:
-    if not os.path.exists(d): os.makedirs(d)
+    if not os.path.exists(d): 
+        os.makedirs(d)
 
 def limpar_nome(nome):
     nome = re.sub(r'[\\/*?:"<>|#]', "", nome)
@@ -24,8 +25,10 @@ if 'fila_nuvem' not in st.session_state:
         try:
             with open(LISTA_SALVA, "r", encoding="utf-8") as f:
                 st.session_state.fila_nuvem = json.load(f)
-        except: st.session_state.fila_nuvem = []
-    else: st.session_state.fila_nuvem = []
+        except: 
+            st.session_state.fila_nuvem = []
+    else: 
+        st.session_state.fila_nuvem = []
 
 def salvar_fila():
     with open(LISTA_SALVA, "w", encoding="utf-8") as f:
@@ -41,14 +44,17 @@ if st.button("🔍 BUSCAR MÚSICA", use_container_width=True):
     if busca:
         with st.spinner("Buscando áudio..."):
             ydl_opts_busca = {
-                'format': 'bestaudio/best', # Busca o melhor áudio para a prévia
+                'format': 'bestaudio/best',
                 'quiet': True,
                 'default_search': 'ytsearch1',
                 'nocheckcertificate': True,
+                'no_warnings': True,
             }
             try:
                 with yt_dlp.YoutubeDL(ydl_opts_busca) as ydl:
                     info = ydl.extract_info(busca, download=False)
                     res = info['entries'][0] if 'entries' in info else info
                     
-                    titulo = limpar_nome(res.get('title', '
+                    titulo = limpar_nome(res.get('title', 'Musica'))
+                    link_yt = res.get('webpage_url')
+                    link_
