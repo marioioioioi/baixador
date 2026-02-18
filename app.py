@@ -4,15 +4,23 @@ import os
 import shutil
 import zipfile
 import json
+import re
 from io import BytesIO
 
 st.set_page_config(page_title="Rádio Hub Premium", page_icon="📻", layout="wide")
 
-TEMP_DIR = "temp_radio"
+# Criar pasta temporária única para esta sessão para evitar conflitos
+SESSION_ID = st.runtime.scriptrunner.add_script_run_ctx().getattr('streamlit_script_run_ctx').session_id
+TEMP_DIR = f"temp_{SESSION_ID}"
 LISTA_SALVA = "fila_radio.json"
 
 if not os.path.exists(TEMP_DIR): os.makedirs(TEMP_DIR)
 
+def limpar_nome(nome):
+    """ Remove caracteres que causam erro no Windows/Linux """
+    return re.sub(r'[\\/*?:"<>|]', "", nome)
+
+# --- INICIALIZAÇÃO DE MEMÓRIA ---
 if 'fila_nuvem' not in st.session_state:
     if os.path.exists(LISTA_SALVA):
         with open(LISTA_SALVA, "r") as f: st.session_state.fila_nuvem = json.load(f)
@@ -24,22 +32,13 @@ if 'busca_termo' not in st.session_state: st.session_state.busca_termo = ""
 def salvar_fila():
     with open(LISTA_SALVA, "w") as f: json.dump(st.session_state.fila_nuvem, f)
 
-# OPÇÕES TÉCNICAS PARA EVITAR BLOQUEIO
-YDL_OPTS_BASE = {
-    'format': 'bestaudio/best',
-    'quiet': True,
-    'no_warnings': True,
-    'source_address': '0.0.0.0', # Força IPv4
-    'nocheckcertificate': True,
-}
-
 @st.dialog("Configurar Música")
 def modal_confirmacao(video_info):
     st.write(f"### 🎵 {video_info.get('title')}")
     st.audio(video_info.get('url'), format="audio/mp3")
     nome_f = st.text_input("Nome do arquivo:", value=video_info.get('title'))
     if st.button("✅ ADICIONAR", use_container_width=True, type="primary"):
-        st.session_state.fila_nuvem.append({'titulo': nome_f, 'link': video_info.get('webpage_url') or video_info.get('url')})
+        st.session_state.fila_nuvem.append({'titulo': limpar_nome(nome_f), 'link': video_info.get('webpage_url') or video_info.get('url')})
         salvar_fila()
         st.rerun()
 
@@ -47,30 +46,30 @@ st.title("📻 Console Rádio Hub 24h")
 
 tab_joca, tab_lote, tab_extrair = st.tabs(["⭐ MODO JOCA", "🚀 LOTE AVANÇADO", "📋 EXTRAIR NOMES"])
 
+# --- ABA 1: MODO JOCA ---
 with tab_joca:
     busca = st.text_input("Buscar música:", value=st.session_state.busca_termo)
     st.session_state.busca_termo = busca
     
     if st.button("🔍 PESQUISAR", use_container_width=True):
         with st.spinner("Buscando..."):
-            try:
-                opts = {**YDL_OPTS_BASE, 'default_search': 'ytsearch1', 'noplaylist': True}
-                with yt_dlp.YoutubeDL(opts) as ydl:
-                    info = ydl.extract_info(busca, download=False)
-                    if 'entries' in info:
-                        modal_confirmacao(info['entries'][0])
-                    else:
-                        modal_confirmacao(info)
-            except Exception as e:
-                st.error(f"O YouTube bloqueou a busca. Tente colar o link direto da música.")
+            with yt_dlp.YoutubeDL({'format':'bestaudio','quiet':True,'default_search':'ytsearch1','noplaylist':True}) as ydl:
+                info = ydl.extract_info(busca, download=False)
+                modal_confirmacao(info['entries'][0] if 'entries' in info else info)
 
     if st.session_state.fila_nuvem:
         st.divider()
-        if st.button("🗑️ LIMPAR TUDO"):
+        c1, c2 = st.columns([3, 1])
+        c1.subheader(f"📋 Fila ({len(st.session_state.fila_nuvem)})")
+        if c2.button("🗑️ LIMPAR TUDO"):
             st.session_state.fila_nuvem = []; salvar_fila(); st.rerun()
 
         for idx, m in enumerate(st.session_state.fila_nuvem):
-            st.write(f"🎵 {m['titulo']}")
+            with st.container(border=True):
+                col_m, col_b = st.columns([5, 1])
+                col_m.write(f"🎵 {m['titulo']}")
+                if col_b.button("❌", key=f"del_{idx}"):
+                    st.session_state.fila_nuvem.pop(idx); salvar_fila(); st.rerun()
 
         if st.button("🚀 GERAR ZIP DA FILA", type="primary", use_container_width=True):
             if os.path.exists(TEMP_DIR): shutil.rmtree(TEMP_DIR)
@@ -78,74 +77,273 @@ with tab_joca:
             
             pb = st.progress(0)
             st_txt = st.empty()
-            sucessos = 0
             
             for i, m in enumerate(st.session_state.fila_nuvem):
-                st_txt.write(f"📥 Baixando: {m['titulo']}")
+                nome_arq = limpar_nome(m['titulo'])
+                st_txt.write(f"📥 Convertendo: {nome_arq}")
+                
+                # Configuração crucial para garantir que o MP3 seja criado
                 opts = {
-                    **YDL_OPTS_BASE,
-                    'postprocessors': [{'key': 'FFmpegExtractAudio','preferredcodec': 'mp3','preferredquality': '320'}],
-                    'outtmpl': f'{TEMP_DIR}/{m["titulo"]}.%(ext)s',
-                }
-                try:
-                    with yt_dlp.YoutubeDL(opts) as ydl:
-                        ydl.download([m['link']])
-                        sucessos += 1
-                except:
-                    st.warning(f"Falha ao baixar: {m['titulo']}")
-                pb.progress((i+1)/len(st.session_state.fila_nuvem))
-            
-            if sucessos > 0:
-                buf = BytesIO()
-                with zipfile.ZipFile(buf, "w") as z:
-                    for arq in os.listdir(TEMP_DIR):
-                        z.write(os.path.join(TEMP_DIR, arq), arq)
-                st_txt.success(f"✅ {sucessos} músicas prontas!")
-                st.download_button("💾 BAIXAR ZIP", buf.getvalue(), file_name="radio_joca.zip", use_container_width=True)
-            else:
-                st.error("❌ O YouTube bloqueou todos os downloads. Tente novamente mais tarde.")
+                    'format': 'bestaudio/best',
+                    'postimport streamlit as st
+import yt_dlp
+import os
+import shutil
+import zipfile
+import json
+import re
+from io import BytesIO
 
-# (As outras abas seguem a mesma lógica de erro acima)
+st.set_page_config(page_title="Rádio Hub Premium", page_icon="📻", layout="wide")
 
-# --- ABA 2: LOTE AVANÇADO ---
-with tab_lote:
-    st.subheader("Processamento em Massa")
-    # Texto salvo no session_state para não sumir ao clicar em baixar
-    txt_area = st.text_area("Cole sua lista:", value=st.session_state.texto_lote, height=200)
-    st.session_state.texto_lote = txt_area
+# Criar pasta temporária única para esta sessão para evitar conflitos
+SESSION_ID = st.runtime.scriptrunner.add_script_run_ctx().getattr('streamlit_script_run_ctx').session_id
+TEMP_DIR = f"temp_{SESSION_ID}"
+LISTA_SALVA = "fila_radio.json"
+
+if not os.path.exists(TEMP_DIR): os.makedirs(TEMP_DIR)
+
+def limpar_nome(nome):
+    """ Remove caracteres que causam erro no Windows/Linux """
+    return re.sub(r'[\\/*?:"<>|]', "", nome)
+
+# --- INICIALIZAÇÃO DE MEMÓRIA ---
+if 'fila_nuvem' not in st.session_state:
+    if os.path.exists(LISTA_SALVA):
+        with open(LISTA_SALVA, "r") as f: st.session_state.fila_nuvem = json.load(f)
+    else: st.session_state.fila_nuvem = []
+
+if 'texto_lote' not in st.session_state: st.session_state.texto_lote = ""
+if 'busca_termo' not in st.session_state: st.session_state.busca_termo = ""
+
+def salvar_fila():
+    with open(LISTA_SALVA, "w") as f: json.dump(st.session_state.fila_nuvem, f)
+
+@st.dialog("Configurar Música")
+def modal_confirmacao(video_info):
+    st.write(f"### 🎵 {video_info.get('title')}")
+    st.audio(video_info.get('url'), format="audio/mp3")
+    nome_f = st.text_input("Nome do arquivo:", value=video_info.get('title'))
+    if st.button("✅ ADICIONAR", use_container_width=True, type="primary"):
+        st.session_state.fila_nuvem.append({'titulo': limpar_nome(nome_f), 'link': video_info.get('webpage_url') or video_info.get('url')})
+        salvar_fila()
+        st.rerun()
+
+st.title("📻 Console Rádio Hub 24h")
+
+tab_joca, tab_lote, tab_extrair = st.tabs(["⭐ MODO JOCA", "🚀 LOTE AVANÇADO", "📋 EXTRAIR NOMES"])
+
+# --- ABA 1: MODO JOCA ---
+with tab_joca:
+    busca = st.text_input("Buscar música:", value=st.session_state.busca_termo)
+    st.session_state.busca_termo = busca
     
-    if st.button("🔥 BAIXAR TUDO EM ZIP", use_container_width=True):
-        musicas = [l.strip() for l in txt_area.split('\n') if l.strip()]
-        if musicas:
+    if st.button("🔍 PESQUISAR", use_container_width=True):
+        with st.spinner("Buscando..."):
+            with yt_dlp.YoutubeDL({'format':'bestaudio','quiet':True,'default_search':'ytsearch1','noplaylist':True}) as ydl:
+                info = ydl.extract_info(busca, download=False)
+                modal_confirmacao(info['entries'][0] if 'entries' in info else info)
+
+    if st.session_state.fila_nuvem:
+        st.divider()
+        c1, c2 = st.columns([3, 1])
+        c1.subheader(f"📋 Fila ({len(st.session_state.fila_nuvem)})")
+        if c2.button("🗑️ LIMPAR TUDO"):
+            st.session_state.fila_nuvem = []; salvar_fila(); st.rerun()
+
+        for idx, m in enumerate(st.session_state.fila_nuvem):
+            with st.container(border=True):
+                col_m, col_b = st.columns([5, 1])
+                col_m.write(f"🎵 {m['titulo']}")
+                if col_b.button("❌", key=f"del_{idx}"):
+                    st.session_state.fila_nuvem.pop(idx); salvar_fila(); st.rerun()
+
+        if st.button("🚀 GERAR ZIP DA FILA", type="primary", use_container_width=True):
             if os.path.exists(TEMP_DIR): shutil.rmtree(TEMP_DIR)
             os.makedirs(TEMP_DIR)
-            pb_l = st.progress(0)
-            st_l = st.empty()
-            for i, m in enumerate(musicas):
-                nome_limpo = m.split('. ', 1)[-1] if '. ' in m[:5] else m
-                st_l.write(f"📥 Baixando: {nome_limpo}")
-                opts_l = {'format':'bestaudio/best','postprocessors':[{'key':'FFmpegExtractAudio','preferredcodec':'mp3','preferredquality':'320'}],'outtmpl':f'{TEMP_DIR}/%(title)s.%(ext)s','default_search':'ytsearch1','quiet':True}
-                try:
-                    with yt_dlp.YoutubeDL(opts_l) as ydl: ydl.download([nome_limpo])
-                except: pass
-                pb_l.progress((i+1)/len(musicas))
             
-            buf_l = BytesIO()
-            with zipfile.ZipFile(buf_l, "w") as z:
-                for arq in os.listdir(TEMP_DIR): z.write(os.path.join(TEMP_DIR, arq), arq)
-            st_l.success("✅ Lote pronto!")
-            st.download_button("💾 SALVAR ZIP DO LOTE", buf_l.getvalue(), file_name="lote_radio.zip", use_container_width=True)
+            pb = st.progress(0)
+            st_txt = st.empty()
+            
+            for i, m in enumerate(st.session_state.fila_nuvem):
+                nome_arq = limpar_nome(m['titulo'])
+                st_txt.write(f"📥 Convertendo: {nome_arq}")
+                
+                # Configuração crucial para garantir que o MP3 seja criado
+                opts = {
+                    'format': 'bestaudio/best',
+                    'postimport streamlit as st
+import yt_dlp
+import os
+import shutil
+import zipfile
+import json
+import re
+from io import BytesIO
 
-# --- ABA 3: EXTRAIR NOMES ---
-with tab_extrair:
-    st.subheader("Extrair nomes de Playlist")
-    url_p = st.text_input("Link da Playlist:")
-    if st.button("GERAR LISTA"):
-        with st.spinner("Lendo..."):
-            with yt_dlp.YoutubeDL({'extract_flat':True,'quiet':True}) as ydl:
-                res = ydl.extract_info(url_p, download=False)
-                nomes = "\n".join([f"{e['title']}" for e in res['entries'] if e])
-                st.session_state.texto_lote = nomes # Já joga pra aba de Lote automaticamente!
-                st.success("Nomes extraídos e enviados para a aba LOTE!")
-                st.text_area("Resultado:", nomes, height=200)
+st.set_page_config(page_title="Rádio Hub Premium", page_icon="📻", layout="wide")
 
+# Criar pasta temporária única para esta sessão para evitar conflitos
+SESSION_ID = st.runtime.scriptrunner.add_script_run_ctx().getattr('streamlit_script_run_ctx').session_id
+TEMP_DIR = f"temp_{SESSION_ID}"
+LISTA_SALVA = "fila_radio.json"
+
+if not os.path.exists(TEMP_DIR): os.makedirs(TEMP_DIR)
+
+def limpar_nome(nome):
+    """ Remove caracteres que causam erro no Windows/Linux """
+    return re.sub(r'[\\/*?:"<>|]', "", nome)
+
+# --- INICIALIZAÇÃO DE MEMÓRIA ---
+if 'fila_nuvem' not in st.session_state:
+    if os.path.exists(LISTA_SALVA):
+        with open(LISTA_SALVA, "r") as f: st.session_state.fila_nuvem = json.load(f)
+    else: st.session_state.fila_nuvem = []
+
+if 'texto_lote' not in st.session_state: st.session_state.texto_lote = ""
+if 'busca_termo' not in st.session_state: st.session_state.busca_termo = ""
+
+def salvar_fila():
+    with open(LISTA_SALVA, "w") as f: json.dump(st.session_state.fila_nuvem, f)
+
+@st.dialog("Configurar Música")
+def modal_confirmacao(video_info):
+    st.write(f"### 🎵 {video_info.get('title')}")
+    st.audio(video_info.get('url'), format="audio/mp3")
+    nome_f = st.text_input("Nome do arquivo:", value=video_info.get('title'))
+    if st.button("✅ ADICIONAR", use_container_width=True, type="primary"):
+        st.session_state.fila_nuvem.append({'titulo': limpar_nome(nome_f), 'link': video_info.get('webpage_url') or video_info.get('url')})
+        salvar_fila()
+        st.rerun()
+
+st.title("📻 Console Rádio Hub 24h")
+
+tab_joca, tab_lote, tab_extrair = st.tabs(["⭐ MODO JOCA", "🚀 LOTE AVANÇADO", "📋 EXTRAIR NOMES"])
+
+# --- ABA 1: MODO JOCA ---
+with tab_joca:
+    busca = st.text_input("Buscar música:", value=st.session_state.busca_termo)
+    st.session_state.busca_termo = busca
+    
+    if st.button("🔍 PESQUISAR", use_container_width=True):
+        with st.spinner("Buscando..."):
+            with yt_dlp.YoutubeDL({'format':'bestaudio','quiet':True,'default_search':'ytsearch1','noplaylist':True}) as ydl:
+                info = ydl.extract_info(busca, download=False)
+                modal_confirmacao(info['entries'][0] if 'entries' in info else info)
+
+    if st.session_state.fila_nuvem:
+        st.divider()
+        c1, c2 = st.columns([3, 1])
+        c1.subheader(f"📋 Fila ({len(st.session_state.fila_nuvem)})")
+        if c2.button("🗑️ LIMPAR TUDO"):
+            st.session_state.fila_nuvem = []; salvar_fila(); st.rerun()
+
+        for idx, m in enumerate(st.session_state.fila_nuvem):
+            with st.container(border=True):
+                col_m, col_b = st.columns([5, 1])
+                col_m.write(f"🎵 {m['titulo']}")
+                if col_b.button("❌", key=f"del_{idx}"):
+                    st.session_state.fila_nuvem.pop(idx); salvar_fila(); st.rerun()
+
+        if st.button("🚀 GERAR ZIP DA FILA", type="primary", use_container_width=True):
+            if os.path.exists(TEMP_DIR): shutil.rmtree(TEMP_DIR)
+            os.makedirs(TEMP_DIR)
+            
+            pb = st.progress(0)
+            st_txt = st.empty()
+            
+            for i, m in enumerate(st.session_state.fila_nuvem):
+                nome_arq = limpar_nome(m['titulo'])
+                st_txt.write(f"📥 Convertendo: {nome_arq}")
+                
+                # Configuração crucial para garantir que o MP3 seja criado
+                opts = {
+                    'format': 'bestaudio/best',
+                    'postimport streamlit as st
+import yt_dlp
+import os
+import shutil
+import zipfile
+import json
+import re
+from io import BytesIO
+
+st.set_page_config(page_title="Rádio Hub Premium", page_icon="📻", layout="wide")
+
+# Criar pasta temporária única para esta sessão para evitar conflitos
+SESSION_ID = st.runtime.scriptrunner.add_script_run_ctx().getattr('streamlit_script_run_ctx').session_id
+TEMP_DIR = f"temp_{SESSION_ID}"
+LISTA_SALVA = "fila_radio.json"
+
+if not os.path.exists(TEMP_DIR): os.makedirs(TEMP_DIR)
+
+def limpar_nome(nome):
+    """ Remove caracteres que causam erro no Windows/Linux """
+    return re.sub(r'[\\/*?:"<>|]', "", nome)
+
+# --- INICIALIZAÇÃO DE MEMÓRIA ---
+if 'fila_nuvem' not in st.session_state:
+    if os.path.exists(LISTA_SALVA):
+        with open(LISTA_SALVA, "r") as f: st.session_state.fila_nuvem = json.load(f)
+    else: st.session_state.fila_nuvem = []
+
+if 'texto_lote' not in st.session_state: st.session_state.texto_lote = ""
+if 'busca_termo' not in st.session_state: st.session_state.busca_termo = ""
+
+def salvar_fila():
+    with open(LISTA_SALVA, "w") as f: json.dump(st.session_state.fila_nuvem, f)
+
+@st.dialog("Configurar Música")
+def modal_confirmacao(video_info):
+    st.write(f"### 🎵 {video_info.get('title')}")
+    st.audio(video_info.get('url'), format="audio/mp3")
+    nome_f = st.text_input("Nome do arquivo:", value=video_info.get('title'))
+    if st.button("✅ ADICIONAR", use_container_width=True, type="primary"):
+        st.session_state.fila_nuvem.append({'titulo': limpar_nome(nome_f), 'link': video_info.get('webpage_url') or video_info.get('url')})
+        salvar_fila()
+        st.rerun()
+
+st.title("📻 Console Rádio Hub 24h")
+
+tab_joca, tab_lote, tab_extrair = st.tabs(["⭐ MODO JOCA", "🚀 LOTE AVANÇADO", "📋 EXTRAIR NOMES"])
+
+# --- ABA 1: MODO JOCA ---
+with tab_joca:
+    busca = st.text_input("Buscar música:", value=st.session_state.busca_termo)
+    st.session_state.busca_termo = busca
+    
+    if st.button("🔍 PESQUISAR", use_container_width=True):
+        with st.spinner("Buscando..."):
+            with yt_dlp.YoutubeDL({'format':'bestaudio','quiet':True,'default_search':'ytsearch1','noplaylist':True}) as ydl:
+                info = ydl.extract_info(busca, download=False)
+                modal_confirmacao(info['entries'][0] if 'entries' in info else info)
+
+    if st.session_state.fila_nuvem:
+        st.divider()
+        c1, c2 = st.columns([3, 1])
+        c1.subheader(f"📋 Fila ({len(st.session_state.fila_nuvem)})")
+        if c2.button("🗑️ LIMPAR TUDO"):
+            st.session_state.fila_nuvem = []; salvar_fila(); st.rerun()
+
+        for idx, m in enumerate(st.session_state.fila_nuvem):
+            with st.container(border=True):
+                col_m, col_b = st.columns([5, 1])
+                col_m.write(f"🎵 {m['titulo']}")
+                if col_b.button("❌", key=f"del_{idx}"):
+                    st.session_state.fila_nuvem.pop(idx); salvar_fila(); st.rerun()
+
+        if st.button("🚀 GERAR ZIP DA FILA", type="primary", use_container_width=True):
+            if os.path.exists(TEMP_DIR): shutil.rmtree(TEMP_DIR)
+            os.makedirs(TEMP_DIR)
+            
+            pb = st.progress(0)
+            st_txt = st.empty()
+            
+            for i, m in enumerate(st.session_state.fila_nuvem):
+                nome_arq = limpar_nome(m['titulo'])
+                st_txt.write(f"📥 Convertendo: {nome_arq}")
+                
+                # Configuração crucial para garantir que o MP3 seja criado
+                opts = {
+                    'format': 'bestaudio/best',
+                    'post
