@@ -7,7 +7,7 @@ import json
 import re
 from io import BytesIO
 
-# --- CONFIGURAÇÃO ---
+# --- CONFIGURAÇÃO DE DIRETÓRIOS ---
 BASE_DIR = "radio online"
 TEMP_DIR = os.path.join(BASE_DIR, "downloads_temp")
 LISTA_SALVA = os.path.join(BASE_DIR, "fila_radio.json")
@@ -20,6 +20,7 @@ def limpar_nome(nome):
     nome = re.sub(r'[\\/*?:"<>|#]', "", nome)
     return nome.strip()
 
+# --- ESTADO DA SESSÃO ---
 if 'fila_nuvem' not in st.session_state:
     if os.path.exists(LISTA_SALVA):
         try:
@@ -38,9 +39,9 @@ st.set_page_config(page_title="Rádio Hub Premium", page_icon="📻")
 st.title("📻 Console Rádio Hub + Prévia")
 
 # --- BUSCA COM PRÉVIA ---
-busca = st.text_input("Cole o Link ou Nome da Música:", placeholder="Ex: Matheus & Kauan Fase de Cura")
+busca = st.text_input("Busque pelo nome ou cole o link do YouTube:", placeholder="Ex: Matheus & Kauan Fase de Cura")
 
-if st.button("🔍 BUSCAR MÚSICA", use_container_width=True):
+if st.button("🔍 PESQUISAR MÚSICA", use_container_width=True):
     if busca:
         with st.spinner("Buscando áudio..."):
             ydl_opts_busca = {
@@ -57,4 +58,19 @@ if st.button("🔍 BUSCAR MÚSICA", use_container_width=True):
                     
                     titulo = limpar_nome(res.get('title', 'Musica'))
                     link_yt = res.get('webpage_url')
-                    link_
+                    link_audio_direto = res.get('url')
+                    
+                    # Armazena temporariamente para o botão de confirmação
+                    st.session_state.temp_song = {
+                        'titulo': titulo, 
+                        'link': link_yt,
+                        'previa': link_audio_direto
+                    }
+                    
+                    st.write(f"### 🎵 Resultado: {titulo}")
+                    st.audio(link_audio_direto, format="audio/mp3")
+            except Exception as e:
+                st.error(f"Erro ao buscar música: {e}")
+
+# Botão para adicionar (aparece só se houver resultado)
+if 'temp_song' in
