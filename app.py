@@ -38,7 +38,7 @@ def salvar_fila():
 st.set_page_config(page_title="Rádio Hub Premium", page_icon="📻")
 st.title("📻 Console Rádio Hub + Prévia")
 
-# --- BUSCA COM PRÉVIA ---
+# --- ABA DE BUSCA ---
 busca = st.text_input("Busque pelo nome ou cole o link do YouTube:", placeholder="Ex: Matheus & Kauan Fase de Cura")
 
 if st.button("🔍 PESQUISAR MÚSICA", use_container_width=True):
@@ -56,6 +56,8 @@ if st.button("🔍 PESQUISAR MÚSICA", use_container_width=True):
                     info = ydl.extract_info(busca, download=False)
                     res = info['entries'][0] if 'entries' in info else info
                     
-                    titulo = limpar_nome(res.get('title', 'Musica'))
+                    titulo_limpo = limpar_nome(res.get('title', 'Musica'))
                     link_yt = res.get('webpage_url')
                     link_audio_direto = res.get('url')
+                    
+                    st.session_state.temp_song
